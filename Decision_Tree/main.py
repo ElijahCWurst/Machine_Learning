@@ -1,21 +1,32 @@
-import sys
+import numpy as np
+import fileinput
 import pandas as pd
+import Node
+import Tree
+
 from sklearn import tree
-import graphviz
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-# Read the input file from command line argument
-input_file = sys.argv[1]
-data = pd.read_csv(input_file)
+filepath = './Decision_Tree/testDataA4/golf.in'
 
-# Separate the features and target variable
-X = data.drop('target', axis=1)
-y = data['target']
+# print(attributeCount)
+attributes: list[list[str]] = []
+labels: list[str] = []
+data: list[list[str]] = []
 
-# Create the decision tree classifier
-clf = tree.DecisionTreeClassifier()
-clf.fit(X, y)
 
-# Visualize the decision tree
-dot_data = tree.export_graphviz(clf, out_file=None, filled=True, rounded=True)
-graph = graphviz.Source(dot_data)
-graph.view()
+for i, line in enumerate(open(filepath)):
+    if(i == 0):
+        attributeCount = int(line)
+    elif(i <= attributeCount):
+        attributes.append(line.split())
+    elif(i == attributeCount + 1):
+        labels = line.split()
+        labels.pop(0)
+    else:
+        data.append(line.split())
+
+print(pd.DataFrame(attributes))
+print(pd.DataFrame(labels))
+print(pd.DataFrame(data))
