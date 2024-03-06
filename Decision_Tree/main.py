@@ -32,8 +32,6 @@ def infoD(targets: list[int], labels) -> float:
             if label == target:
                 i += 1
         counts.append(i)
-    print(counts[0])
-    print(counts[1])
     for count in counts:
         if(len(targets) == 0):
             product += 0
@@ -41,27 +39,82 @@ def infoD(targets: list[int], labels) -> float:
             product += (-1 * (count / len(targets)) * np.log2(count / len(targets)))
     return product
 
-def infoAttributeD(targets: list[int], inputs, attributes, labels) -> float:
+def infoAttributeD(targets: list[int], inputs, attributes, labels) -> str:
+
     counts = []
+    bestSplitAttribute: str = ''
+    currentInfoGain: float = -1
+    bestInfoGain: float = -1
+    targetedCounts = []
     indexer = 0
+    indexer2 = 0
+    product: float = 0
+
     for i, attribute in enumerate(attributes):
         for j, value in enumerate(attribute):
+            if(j == 0):
+                continue
             for k, target in enumerate(targets):
                 if value == inputs[k, i]:
                     indexer += 1
+                    if target == labels[0]:
+                        indexer2 += 1
+
+
+            targetedCounts.append(indexer2)            
             counts.append(indexer)
             indexer = 0
-        counts.pop(0)
-        print(attribute)
-        print(inputs[:, i])
-        print(counts)
+            indexer2 = 0
+
+        
+        for l, count in enumerate(counts):
+            if(len(targets) == 0):
+                product += 0
+            elif (count - targetedCounts[l] == 0 or targetedCounts[l] == 0):
+                product += 0
+            else:
+                product = (product + ((count/len(targets)) * (-1 * ((targetedCounts[l] / count) * np.log2(targetedCounts[l] / count) + (((count - targetedCounts[l]) / count) * np.log2((count - targetedCounts[l]) / count))))))
+        
+        currentInfoGain = infoD(targets, labels) - product
+        if(currentInfoGain > bestInfoGain):
+            bestInfoGain = currentInfoGain
+            bestSplitAttribute = attribute[0]
+
+        product = 0
+        targetedCounts.clear()
         counts.clear()
-    return -1
+    return bestSplitAttribute
 
+def split_data(X: np.ndarray[int, np.dtype[np.int_]], y: list[int], feature: int, value: int) -> tuple[np.ndarray[int, np.dtype[np.int_]], list, np.ndarray[int, np.dtype[np.int_]], list]:
+    true_indices = np.where(X[:, feature] <= value)[0]
+    false_indices = np.where(X[:, feature] > value)[0]
+    true_X, true_y = X[true_indices], y[true_indices]
+    false_X, false_y = X[false_indices], y[false_indices]
+    return true_X, true_y, false_X, false_y # type: ignore
 
+def generateDecisionTree(X: np.ndarray[int, np.dtype[np.int_]], y: list[int], attributes: list[list[str]], labels: list[str]) -> dict:
+    # if all labels are the same, return a leaf node with that label
+    if len(set(y)) == 1:
+        return {'label': y[0]}
+    # if no features are left, return a leaf node with the most common label
+    if len(attributes) == 0:
+        most_common_label = max(set(y), key=y.count)
+        return {'label': most_common_label}
+    # find the best feature to split on
+    best_feature = infoAttributeD(y, X, attributes, labels)
+    # create a new decision tree node with the best feature
+    tree = {'feature': best_feature, 'branches': {}}
+    # remove the best feature from the list of attributes
+    best_feature_index = [i for i, attribute in enumerate(attributes) if attribute[0] == best_feature][0]
+    attributes = attributes[:best_feature_index] + attributes[best_feature_index + 1:]
+    # for each possible value of the best feature, create a new branch
+    for value in set(X[:, best_feature_index]):
+        true_X, true_y, false_X, false_y = split_data(X, y, best_feature_index, value)
+        tree['branches'][value] = generateDecisionTree(true_X, true_y, attributes, labels)
+        tree['branches'][value] = generateDecisionTree(false_X, false_y, attributes, labels)
+    return tree
 
-
-filepath = './Decision_Tree/testDataA4/golf.in'
+filepath = './Decision_Tree/testDataA4/restaurantDecisionTree.in'
 
 attributes, labels, trainingdatastr = loadData(filepath)
 
@@ -72,11 +125,8 @@ targetsNP = trainingdata[:, -1]
 
 targetsList = targetsNP.tolist()
 
-# remove the first column from attributes
-# attributes = [attr[1:] for attr in attributes]
-
-# print(infoD(targetsList, labels))
-infoAttributeD(targetsList, inputs, attributes, labels)
+bestSplitAttribute = infoAttributeD(targetsList, inputs, attributes, labels)
+print(bestSplitAttribute)
 
 # print(pd.DataFrame(trainingdata))
 # print(pd.DataFrame(inputs))
