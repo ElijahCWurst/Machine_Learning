@@ -1,8 +1,5 @@
 import numpy as np
-import fileinput
 import pandas as pd
-import Node
-import Tree
 
 from sklearn import tree
 from sklearn.model_selection import train_test_split
