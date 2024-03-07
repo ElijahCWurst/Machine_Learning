@@ -7,7 +7,7 @@ getcontext().prec = 60
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/simple.in'
+    filepath = './Decision_Tree/testDataA4/continue2.in'
 
     attributes, labels, trainingdatastr = loadData(filepath)
 
@@ -30,9 +30,6 @@ def main():
     # print(pd.DataFrame(targetsNP))
     # print(pd.DataFrame(attributes))
     # print(pd.DataFrame(labels))
-
-
-
 
 
 def loadData(filepath: str):
@@ -71,9 +68,15 @@ def infoD(targets: list[int], labels) -> float:
             product += (-1 * (count / len(targets)) * np.log2(count / len(targets)))
     return product
 
-def infoAttributeD(targets, inputs, attributes, labels,):
-
+def infoAttributeD(targets, inputs, attributes, labels):
+    continuous = False
+    continuousAttributes = []
+    continuousIndices = []
     counts = []
+    countsGT = []
+    countsLT = []
+    partitionedCountsLT = []
+    partitionedCountsGT = []
     bestSplitAttributeIndex: int = -1
     bestSplitAttribute: str = ''
     currentInfoGain = Decimal(0)
@@ -81,26 +84,78 @@ def infoAttributeD(targets, inputs, attributes, labels,):
     targetedCounts = []
     indexer = 0
     indexer2 = 0
+    indexerLT = 0
+    indexerGT = 0
+    indexer2LT = 0
+    indexer2GT = 0
     product = Decimal(0)
-
-
+    possibleSplits = []
+    
+    # Attribute is the line in the file, ex: ['age', '0-30', '31-60', '61-100']
+    # Value is the value of the attribute, ex: '0-30', and we skip the first value in the attribute list 
+    #       b/c it is the attribute name
+    # Target is the target value, ex: 'yes' or 'no', and is there to compare to the inputs for the coming math
+    #       essentially I need the amount of 'yes's and 'no's for each value of the attribute, and the 
+    #       target loop is for that.
     for i, attribute in enumerate(attributes):
         for j, value in enumerate(attribute):
             if(j == 0):
                 continue
+            elif(value == 'continuous'):
+                continuous = True
+                continuousColumn = inputs[:, i]
+                continuousColumn = np.sort(continuousColumn)
+                continuousColumn = np.unique(continuousColumn)
+                attribute.pop(1)
+                print(attribute)
+
+                for m in range(len(continuousColumn) - 1):
+                    attribute.append((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2)
+                value = attribute[j]
+                print(value)
+                print(attribute)
+                
+
             for k, target in enumerate(targets):
+                if continuous:
+                    if value 
                 if value == inputs[k, i]:
                     indexer += 1
                     if target == labels[0]:
                         indexer2 += 1
 
-
+            # Store the amount of 'yes's and 'no's for each value of the attribute and reset the counters.
             targetedCounts.append(indexer2)            
             counts.append(indexer)
             indexer = 0
             indexer2 = 0
 
-        
+        # If the attribute is continuous, we need to calculate the information gain differently
+        # if(continuous):
+
+            # for split in possibleSplits:
+            #     for n, target in enumerate(targets):
+            #         if float(inputs[n, i]) < split:
+            #             indexerLT += 1
+            #             if target == labels[0]:
+            #                 indexer2LT += 1
+            #         elif float(inputs[n, i]) >= split:
+            #             indexerGT += 1
+            #             if target == labels[0]:
+            #                 indexer2GT += 1
+            #     countsLT.append(indexerLT)
+            #     countsGT.append(indexerGT)
+            #     partitionedCountsLT.append(indexer2LT)
+            #     partitionedCountsGT.append(indexer2GT)
+            #     indexerLT = 0
+            #     indexerGT = 0
+            #     indexer2LT = 0
+            #     indexer2GT = 0
+
+            # for l, count in enumerate(countsLT):
+
+
+        # The math that actually calculates the information gain
         for l, count in enumerate(counts):
             if(len(targets) == 0):
                 product += 0
@@ -119,6 +174,7 @@ def infoAttributeD(targets, inputs, attributes, labels,):
         product = 0
         targetedCounts.clear()
         counts.clear()
+
     return bestSplitAttribute, bestSplitAttributeIndex
 
 def splitOnAttribute(splitAttribute, targets, inputs, attributes):
