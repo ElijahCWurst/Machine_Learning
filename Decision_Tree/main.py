@@ -7,7 +7,7 @@ getcontext().prec = 60
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/simple.in'
+    filepath = './Decision_Tree/testDataA4/golf.in'
 
     attributes, labels, trainingdatastr = loadData(filepath)
 
