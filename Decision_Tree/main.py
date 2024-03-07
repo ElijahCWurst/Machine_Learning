@@ -7,7 +7,7 @@ getcontext().prec = 60
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/parity3.in'
+    filepath = './Decision_Tree/testDataA4/simple.in'
 
     attributes, labels, trainingdatastr = loadData(filepath)
 
@@ -65,7 +65,7 @@ def infoD(targets: list[int], labels) -> float:
                 i += 1
         counts.append(i)
     for count in counts:
-        if(len(targets) == 0):
+        if(len(targets) == 0 or count == 0):
             product += 0
         else:
             product += (-1 * (count / len(targets)) * np.log2(count / len(targets)))
@@ -77,7 +77,7 @@ def infoAttributeD(targets, inputs, attributes, labels):
     bestSplitAttributeIndex: int = -1
     bestSplitAttribute: str = ''
     currentInfoGain = Decimal(0)
-    bestInfoGain = Decimal(0)
+    bestInfoGain = Decimal(-1)
     targetedCounts = []
     indexer = 0
     indexer2 = 0
@@ -126,6 +126,7 @@ def splitOnAttribute(splitAttribute, targets, inputs, attributes):
     splitTarget = []
     splitInputList = []
     splitTargetList = []
+    splitAttributeIndex = -1000000
 
     for attribute in attributes:
         if attribute[0] == splitAttribute:
