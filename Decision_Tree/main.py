@@ -71,7 +71,7 @@ def infoD(targets: list[int], labels) -> float:
             product += (-1 * (count / len(targets)) * np.log2(count / len(targets)))
     return product
 
-def infoAttributeD(targets, inputs, attributes, labels):
+def infoAttributeD(targets, inputs, attributes, labels,):
 
     counts = []
     bestSplitAttributeIndex: int = -1
