@@ -1,7 +1,8 @@
 class Node:
-	def __init__(self, feature=None, value=None, results=None, true_branch=None, false_branch=None):
-		self.feature = feature # Feature to split on
-		self.value = value	 # Value of the feature to split on
-		self.results = results # Stores class labels if node is a leaf node
-		self.true_branch = true_branch # Branch for values that are True for the feature
-		self.false_branch = false_branch # Branch for values that are False for the feature
+	def __init__(self, splitAttribute=None, attributeValue=None, result=None, children=None, childrenCount=None, isLeaf=False):
+		self.splitAttribute = splitAttribute # Feature to split on
+		self.attributeValue = attributeValue	 # Value of the feature to split on
+		self.result = result # Stores class labels if node is a leaf node
+		self.children = children
+		self.childrenCount = childrenCount
+		self.isLeaf = isLeaf

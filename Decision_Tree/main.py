@@ -1,7 +1,36 @@
 import numpy as np
 import pandas as pd
-
+import statistics
 # calculate information gain and return the best feature to split on
+
+def main():
+    filepath = './Decision_Tree/testDataA4/restaurantDecisionTree.in'
+
+    attributes, labels, trainingdatastr = loadData(filepath)
+
+    trainingdata = np.array(trainingdatastr)
+
+    inputs = trainingdata[:, :-1]
+    targetsNP = trainingdata[:, -1]
+
+    targetsList = targetsNP.tolist()
+
+    # bestSplitAttribute = infoAttributeD(targetsList, inputs, attributes, labels)
+    # print(bestSplitAttribute)
+
+
+    generateDecisionTree(targetsList, inputs, attributes, labels)
+
+
+    # print(pd.DataFrame(trainingdata))
+    # print(pd.DataFrame(inputs))
+    # print(pd.DataFrame(targetsNP))
+    # print(pd.DataFrame(attributes))
+    # print(pd.DataFrame(labels))
+
+
+
+
 
 def loadData(filepath: str):
     attributeCount = 0
@@ -39,9 +68,10 @@ def infoD(targets: list[int], labels) -> float:
             product += (-1 * (count / len(targets)) * np.log2(count / len(targets)))
     return product
 
-def infoAttributeD(targets: list[int], inputs, attributes, labels) -> str:
+def infoAttributeD(targets, inputs, attributes, labels):
 
     counts = []
+    bestSplitAttributeIndex: int = -1
     bestSplitAttribute: str = ''
     currentInfoGain: float = -1
     bestInfoGain: float = -1
@@ -79,58 +109,65 @@ def infoAttributeD(targets: list[int], inputs, attributes, labels) -> str:
         if(currentInfoGain > bestInfoGain):
             bestInfoGain = currentInfoGain
             bestSplitAttribute = attribute[0]
+            bestSplitAttributeIndex = i
 
         product = 0
         targetedCounts.clear()
         counts.clear()
-    return bestSplitAttribute
+    return bestSplitAttribute, bestSplitAttributeIndex
 
-def split_data(X: np.ndarray[int, np.dtype[np.int_]], y: list[int], feature: int, value: int) -> tuple[np.ndarray[int, np.dtype[np.int_]], list, np.ndarray[int, np.dtype[np.int_]], list]:
-    true_indices = np.where(X[:, feature] <= value)[0]
-    false_indices = np.where(X[:, feature] > value)[0]
-    true_X, true_y = X[true_indices], y[true_indices]
-    false_X, false_y = X[false_indices], y[false_indices]
-    return true_X, true_y, false_X, false_y # type: ignore
+def splitOnAttribute(splitAttribute, targets, inputs, attributes):
+    splitInput = []
+    splitTarget = []
+    splitInputList = []
+    splitTargetList = []
 
-def generateDecisionTree(X: np.ndarray[int, np.dtype[np.int_]], y: list[int], attributes: list[list[str]], labels: list[str]) -> dict:
-    # if all labels are the same, return a leaf node with that label
-    if len(set(y)) == 1:
-        return {'label': y[0]}
-    # if no features are left, return a leaf node with the most common label
+    for attribute in attributes:
+        if attribute[0] == splitAttribute:
+            splitAttributeIndex = attributes.index(attribute)
+            break
+    for j, value in enumerate(attributes[splitAttributeIndex]):
+        if j == 0:
+            continue
+        for i, input in enumerate(inputs):
+            if input[splitAttributeIndex] == attributes[splitAttributeIndex][j]:
+                splitInput.append(input)
+                splitTarget.append(targets[i])
+        splitInputList.append(np.array(splitInput))
+        splitTargetList.append(np.array(splitTarget))
+        splitInput.clear()
+        splitTarget.clear()
+    
+    newAttributes = attributes.copy()
+    newAttributes.pop(splitAttributeIndex)
+    
+    # remove the split attribute from the splitInputList
+    for i, input in enumerate(splitInputList):
+        if(input.size == 0):
+            continue
+        splitInputList[i] = np.delete(input, splitAttributeIndex, 1)
+        
+    return splitInputList, splitTargetList, newAttributes
+
+def generateDecisionTree(targets, inputs, attributes, labels, depth=0):
+    
+    all_same = all(target == targets[0] for target in targets)
+    if(all_same):
+        print("    " * (depth) + targets[0])
+        return
     if len(attributes) == 0:
-        most_common_label = max(set(y), key=y.count)
-        return {'label': most_common_label}
-    # find the best feature to split on
-    best_feature = infoAttributeD(y, X, attributes, labels)
-    # create a new decision tree node with the best feature
-    tree = {'feature': best_feature, 'branches': {}}
-    # remove the best feature from the list of attributes
-    best_feature_index = [i for i, attribute in enumerate(attributes) if attribute[0] == best_feature][0]
-    attributes = attributes[:best_feature_index] + attributes[best_feature_index + 1:]
-    # for each possible value of the best feature, create a new branch
-    for value in set(X[:, best_feature_index]):
-        true_X, true_y, false_X, false_y = split_data(X, y, best_feature_index, value)
-        tree['branches'][value] = generateDecisionTree(true_X, true_y, attributes, labels)
-        tree['branches'][value] = generateDecisionTree(false_X, false_y, attributes, labels)
-    return tree
+        print("No attributes")
+        return
 
-filepath = './Decision_Tree/testDataA4/restaurantDecisionTree.in'
+    bestSplit, bestSplitIndex = infoAttributeD(targets, inputs, attributes, labels)
+    newInputs, newTargets, newAttributes = splitOnAttribute(bestSplit, targets, inputs, attributes)
 
-attributes, labels, trainingdatastr = loadData(filepath)
+    for i, input in enumerate(newInputs):
+        print("    " * (depth) + bestSplit + " = " + attributes[bestSplitIndex][i+1] + ":")
 
-trainingdata: np.ndarray[int, np.dtype[np.int_]] = np.array(trainingdatastr)
+        generateDecisionTree(newTargets[i], input, newAttributes, labels, depth+1)
 
-inputs = trainingdata[:, :-1]
-targetsNP = trainingdata[:, -1]
 
-targetsList = targetsNP.tolist()
 
-bestSplitAttribute = infoAttributeD(targetsList, inputs, attributes, labels)
-print(bestSplitAttribute)
-
-# print(pd.DataFrame(trainingdata))
-# print(pd.DataFrame(inputs))
-# print(pd.DataFrame(targetsNP))
-# print(pd.DataFrame(attributes))
-# print(pd.DataFrame(labels))
-
+if __name__ == "__main__":
+    main()
