@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
-import statistics
+from decimal import Decimal, getcontext
+
+getcontext().prec = 60
+
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/restaurantDecisionTree.in'
+    filepath = './Decision_Tree/testDataA4/parity3.in'
 
     attributes, labels, trainingdatastr = loadData(filepath)
 
@@ -73,12 +76,13 @@ def infoAttributeD(targets, inputs, attributes, labels):
     counts = []
     bestSplitAttributeIndex: int = -1
     bestSplitAttribute: str = ''
-    currentInfoGain: float = -1
-    bestInfoGain: float = -1
+    currentInfoGain = Decimal(0)
+    bestInfoGain = Decimal(0)
     targetedCounts = []
     indexer = 0
     indexer2 = 0
-    product: float = 0
+    product = Decimal(0)
+
 
     for i, attribute in enumerate(attributes):
         for j, value in enumerate(attribute):
@@ -103,9 +107,10 @@ def infoAttributeD(targets, inputs, attributes, labels):
             elif (count - targetedCounts[l] == 0 or targetedCounts[l] == 0):
                 product += 0
             else:
-                product = (product + ((count/len(targets)) * (-1 * ((targetedCounts[l] / count) * np.log2(targetedCounts[l] / count) + (((count - targetedCounts[l]) / count) * np.log2((count - targetedCounts[l]) / count))))))
+                product = (product + Decimal(((count/len(targets)) * (-1 * ((targetedCounts[l] / count) * np.log2(targetedCounts[l] / count) + (((count - targetedCounts[l]) / count) * np.log2((count - targetedCounts[l]) / count)))))))
         
-        currentInfoGain = infoD(targets, labels) - product
+        infod = Decimal(infoD(targets, labels))
+        currentInfoGain = infod - product
         if(currentInfoGain > bestInfoGain):
             bestInfoGain = currentInfoGain
             bestSplitAttribute = attribute[0]
@@ -151,19 +156,31 @@ def splitOnAttribute(splitAttribute, targets, inputs, attributes):
 
 def generateDecisionTree(targets, inputs, attributes, labels, depth=0):
     
+    rowCount = len(inputs)
+
+    labelCount = [0] * len(labels)
+
+    for i in range(rowCount):
+        label = targets[i]
+        labelIDX = labels.index(label)
+        labelCount[labelIDX] += 1
+
     all_same = all(target == targets[0] for target in targets)
     if(all_same):
-        print("    " * (depth) + targets[0])
+        if(len(targets) != 0):
+            print("\t" * (depth) + targets[0])
+        else:
+            print("\t" * (depth) + "No data")
         return
     if len(attributes) == 0:
-        print("No attributes")
+        print("\t" * (depth) + labels[labelCount.index(max(labelCount))])
         return
 
     bestSplit, bestSplitIndex = infoAttributeD(targets, inputs, attributes, labels)
     newInputs, newTargets, newAttributes = splitOnAttribute(bestSplit, targets, inputs, attributes)
 
     for i, input in enumerate(newInputs):
-        print("    " * (depth) + bestSplit + " = " + attributes[bestSplitIndex][i+1] + ":")
+        print("\t" * (depth) + bestSplit + " = " + attributes[bestSplitIndex][i+1] + ":")
 
         generateDecisionTree(newTargets[i], input, newAttributes, labels, depth+1)
 
