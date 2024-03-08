@@ -90,6 +90,7 @@ def infoAttributeD(targets, inputs, attributes, labels):
     indexer2GT = 0
     product = Decimal(0)
     possibleSplits = []
+    alreadyCheckedLT = False
     
     # Attribute is the line in the file, ex: ['age', '0-30', '31-60', '61-100']
     # Value is the value of the attribute, ex: '0-30', and we skip the first value in the attribute list 
@@ -98,31 +99,52 @@ def infoAttributeD(targets, inputs, attributes, labels):
     #       essentially I need the amount of 'yes's and 'no's for each value of the attribute, and the 
     #       target loop is for that.
     for i, attribute in enumerate(attributes):
+        alreadyCheckedLT = False
         for j, value in enumerate(attribute):
             if(j == 0):
                 continue
             elif(value == 'continuous'):
                 continuous = True
+
+                # Get the unique values of the continuous attribute
                 continuousColumn = inputs[:, i]
                 continuousColumn = np.sort(continuousColumn)
                 continuousColumn = np.unique(continuousColumn)
                 attribute.pop(1)
-                print(attribute)
 
+                # Get the split value options from the continuous attribute and add them to the attributes list
                 for m in range(len(continuousColumn) - 1):
-                    attribute.append((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2)
+                    if m == 0:
+                        # edit current attribute
+                        attribute.append(str((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2))
+                        attribute.append(str((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2))
+                        # duplicate the current attribute's column in the inputs array
+                        inputs = np.insert(inputs, i, inputs[:, i], axis=1)
+                    else:
+                        # add new attribute
+                        attributes.append([attribute[0], str((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2), str((float(continuousColumn[m]) + float(continuousColumn[m+1])) / 2)])
                 value = attribute[j]
-                print(value)
-                print(attribute)
                 
 
             for k, target in enumerate(targets):
+                # If the attribute is continuous, we need to check <= and > for the value of the attribute in seperate iterations
                 if continuous:
-                    if value 
-                if value == inputs[k, i]:
+                    if alreadyCheckedLT:
+                        if float(inputs[k, i]) > float(value):
+                            indexer += 1
+                            if target == labels[0]:
+                                indexer2 += 1
+                    elif float(inputs[k, i]) <= float(value):
+
+                        indexer += 1
+                        if target == labels[0]:
+                            indexer2 += 1
+                elif value == inputs[k, i]:
                     indexer += 1
                     if target == labels[0]:
                         indexer2 += 1
+            if continuous:
+                alreadyCheckedLT = True
 
             # Store the amount of 'yes's and 'no's for each value of the attribute and reset the counters.
             targetedCounts.append(indexer2)            
