@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sys
 from decimal import Decimal, getcontext
 
 getcontext().prec = 60
@@ -7,9 +8,20 @@ getcontext().prec = 60
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/parity3.in'
+    # implement commandline arguments
+    filepath = sys.argv[1]
 
-    attributes, labels, trainingdatastr = loadData(filepath)
+    if len(sys.argv) > 2:
+        print("Too many arguments")
+        sys.exit()
+
+    # filepath = './Decision_Tree/testDataA4/parity3.in'
+    # verify the file exists
+    try:
+        attributes, labels, trainingdatastr = loadData(filepath)
+    except Exception as e:
+        print(e)
+        sys.exit()
 
     trainingdata = np.array(trainingdatastr)
 
