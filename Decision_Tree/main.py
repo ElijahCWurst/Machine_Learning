@@ -7,7 +7,7 @@ getcontext().prec = 60
 # calculate information gain and return the best feature to split on
 
 def main():
-    filepath = './Decision_Tree/testDataA4/golfc.in'
+    filepath = './Decision_Tree/testDataA4/parity3.in'
 
     attributes, labels, trainingdatastr = loadData(filepath)
 
@@ -125,36 +125,40 @@ def infoAttributeD(targets, inputs, attributes, labels, usedSplits):
                 for k in range(len(continuousColumn) - 1):
                     possibleSplits.append((float(continuousColumn[k]) + float(continuousColumn[k+1])) / 2)
 
+            if continuous == False:
+                for k, target in enumerate(targets):
+                    # If the attribute is continuous, we need to check <= and > for the value of the attribute in seperate iterations
+                    # if continuous:
+                    #     if alreadyCheckedLT:
+                    #         if float(inputs[k, i]) > float(value):
+                    #             indexer += 1
+                    #             if target == labels[0]:
+                    #                 indexer2 += 1
+                    #     elif float(inputs[k, i]) <= float(value):
 
-            for k, target in enumerate(targets):
-                # If the attribute is continuous, we need to check <= and > for the value of the attribute in seperate iterations
+                    #         indexer += 1
+                    #         if target == labels[0]:
+                    #             indexer2 += 1
+                    if value == inputs[k, i]:
+                        indexer += 1
+                        if target == labels[0]:
+                            indexer2 += 1
                 # if continuous:
-                #     if alreadyCheckedLT:
-                #         if float(inputs[k, i]) > float(value):
-                #             indexer += 1
-                #             if target == labels[0]:
-                #                 indexer2 += 1
-                #     elif float(inputs[k, i]) <= float(value):
+                #     alreadyCheckedLT = True
 
-                #         indexer += 1
-                #         if target == labels[0]:
-                #             indexer2 += 1
-                if value == inputs[k, i]:
-                    indexer += 1
-                    if target == labels[0]:
-                        indexer2 += 1
-            # if continuous:
-            #     alreadyCheckedLT = True
-
-            # Store the amount of 'yes's and 'no's for each value of the attribute and reset the counters.
-            targetedCounts.append(indexer2)            
-            counts.append(indexer)
-            indexer = 0
-            indexer2 = 0
+                # Store the amount of 'yes's and 'no's for each value of the attribute and reset the counters.
+                targetedCounts.append(indexer2)            
+                counts.append(indexer)
+                indexer = 0
+                indexer2 = 0
 
         # If the attribute is continuous, we need to calculate the information gain differently
         if(continuous):
             for split in possibleSplits:
+                countsLT.clear()
+                countsGT.clear()
+                partitionedCountsLT.clear()
+                partitionedCountsGT.clear()
                 if usedSplits != None:
                     if ((attribute[0] + str(split)) in usedSplits):
                         continue
@@ -176,22 +180,35 @@ def infoAttributeD(targets, inputs, attributes, labels, usedSplits):
                 indexer2LT = 0
                 indexer2GT = 0
 
+                product = Decimal(0)
                 if(len(targets) == 0):
-                    product += 0
-                elif (countsLT[0] - partitionedCountsLT[0] == 0 or partitionedCountsLT[0] == 0):
-                    product += 0
-                elif (countsGT[0] - partitionedCountsGT[0] == 0 or partitionedCountsGT[0] == 0):
-                    product += 0
+                    product += Decimal(0)
+                
+                if (countsLT[0] - partitionedCountsLT[0] == 0 or partitionedCountsLT[0] == 0):
+                    if partitionedCountsLT[0] == 0:
+                        product += Decimal(0)
+                    else:
+                        product += Decimal((countsLT[0]/len(targets)) * (-1 * (partitionedCountsLT[0] / countsLT[0]) * np.log2(partitionedCountsLT[0] / countsLT[0])))
                 else:
-                    product += ((Decimal(((countsLT[0]/len(targets)) * (-1 * ((partitionedCountsLT[0] / countsLT[0]) * np.log2(partitionedCountsLT[0] / countsLT[0]) + (((countsLT[0] - partitionedCountsLT[0]) / countsLT[0]) * np.log2((countsLT[0] - partitionedCountsLT[0]) / countsLT[0])))))))
-                             + (Decimal(((countsGT[0]/len(targets)) * (-1 * ((partitionedCountsGT[0] / countsGT[0]) * np.log2(partitionedCountsGT[0] / countsGT[0]) + (((countsGT[0] - partitionedCountsGT[0]) / countsGT[0]) * np.log2((countsGT[0] - partitionedCountsGT[0]) / countsGT[0]))))))))
+                    product += (Decimal(((countsLT[0]/len(targets)) * (-1 * ((partitionedCountsLT[0] / countsLT[0]) * np.log2(partitionedCountsLT[0] / countsLT[0]) + (((countsLT[0] - partitionedCountsLT[0]) / countsLT[0]) * np.log2((countsLT[0] - partitionedCountsLT[0]) / countsLT[0])))))))
+                
+                if (countsGT[0] - partitionedCountsGT[0] == 0 or partitionedCountsGT[0] == 0):
+                    if partitionedCountsGT[0] == 0:
+                        product += Decimal(0)
+                    else:
+                        product += Decimal((countsGT[0]/len(targets)) * (-1 * (partitionedCountsGT[0] / countsGT[0]) * np.log2(partitionedCountsGT[0] / countsGT[0])))
+                else:
+                    product += (Decimal(((countsGT[0]/len(targets)) * (-1 * ((partitionedCountsGT[0] / countsGT[0]) * np.log2(partitionedCountsGT[0] / countsGT[0]) + (((countsGT[0] - partitionedCountsGT[0]) / countsGT[0]) * np.log2((countsGT[0] - partitionedCountsGT[0]) / countsGT[0])))))))
 
                 currentContInfoGain = infod - product
-                if(currentContInfoGain > bestContInfoGain):
+                
+                # currentContInfoGain = (1 - currentContInfoGain)
+                if(currentContInfoGain >= bestContInfoGain):
                     bestContInfoGain = currentContInfoGain
                     bestContSplitAttribute = attribute[0]
                     bestContSplitAttributeIndex = i
                     bestContSplit = split
+            
         else:
             # The math that actually calculates the information gain
             for l, count in enumerate(counts):
@@ -207,18 +224,19 @@ def infoAttributeD(targets, inputs, attributes, labels, usedSplits):
                 bestInfoGain = currentInfoGain
                 bestSplitAttribute = attribute[0]
                 bestSplitAttributeIndex = i
-
-        if bestContInfoGain > bestInfoGain:
-            bestInfoGain = bestContInfoGain
-            bestSplitAttribute = bestContSplitAttribute
-            bestSplitAttributeIndex = bestContSplitAttributeIndex
-            # usedSplits.append(bestContSplitAttribute + str(bestContSplit))
-        else:
-            continuous = False
         
         product = 0
         targetedCounts.clear()
         counts.clear()
+
+    if bestContInfoGain > bestInfoGain:
+        bestInfoGain = bestContInfoGain
+        bestSplitAttribute = bestContSplitAttribute
+        bestSplitAttributeIndex = bestContSplitAttributeIndex
+        continuous = True
+        # usedSplits.append(bestContSplitAttribute + str(bestContSplit))
+    else:
+        continuous = False
 
     return bestSplitAttribute, bestSplitAttributeIndex, continuous, usedSplit, bestContSplit
 
