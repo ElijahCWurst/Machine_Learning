@@ -9,6 +9,10 @@ getcontext().prec = 60
 
 def main():
     # implement commandline arguments
+    if len(sys.argv) < 2:
+        print("Please provide a file path")
+        sys.exit()
+        
     filepath = sys.argv[1]
 
     if len(sys.argv) > 2:
