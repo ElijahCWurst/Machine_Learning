@@ -197,24 +197,36 @@ def infoAttributeD(targets, inputs, attributes, labels):
         targetedCounts.clear()
         counts.clear()
 
-    return bestSplitAttribute, bestSplitAttributeIndex
+    return bestSplitAttribute, bestSplitAttributeIndex, targets, inputs, attributes
 
-def splitOnAttribute(splitAttribute, targets, inputs, attributes):
+def splitOnAttribute(splitAttribute, bestSplitIndex, targets, inputs, attributes):
     splitInput = []
     splitTarget = []
     splitInputList = []
     splitTargetList = []
-    splitAttributeIndex = -1000000
+    splitAttributeIndex = bestSplitIndex
 
-    for attribute in attributes:
-        if attribute[0] == splitAttribute:
-            splitAttributeIndex = attributes.index(attribute)
-            break
+    # for attribute in attributes:
+    #     if attribute[0] == splitAttribute:
+    #         splitAttributeIndex = attributes.index(attribute)
+    #         break
     for j, value in enumerate(attributes[splitAttributeIndex]):
         if j == 0:
             continue
         for i, input in enumerate(inputs):
-            if input[splitAttributeIndex] == attributes[splitAttributeIndex][j]:
+            # if attribute[1] == attribute[2]: we are dealing with a continuous attribute
+            if attributes[splitAttributeIndex][1] == attributes[splitAttributeIndex][2]:
+                # the first index indicates this is the less than or equal to split
+                if j == 1:
+                    if float(input[splitAttributeIndex]) <= float(attributes[splitAttributeIndex][1]):
+                        splitInput.append(input)
+                        splitTarget.append(targets[i])
+                # the second index indicates this is the greater than split
+                elif j == 2:
+                    if float(input[splitAttributeIndex]) > float(attributes[splitAttributeIndex][1]):
+                        splitInput.append(input)
+                        splitTarget.append(targets[i])
+            elif input[splitAttributeIndex] == attributes[splitAttributeIndex][j]:
                 splitInput.append(input)
                 splitTarget.append(targets[i])
         splitInputList.append(np.array(splitInput))
@@ -255,8 +267,8 @@ def generateDecisionTree(targets, inputs, attributes, labels, depth=0):
         print("\t" * (depth) + labels[labelCount.index(max(labelCount))])
         return
 
-    bestSplit, bestSplitIndex = infoAttributeD(targets, inputs, attributes, labels)
-    newInputs, newTargets, newAttributes = splitOnAttribute(bestSplit, targets, inputs, attributes)
+    bestSplit, bestSplitIndex, tempTargets, tempInputs, tempAttributes = infoAttributeD(targets, inputs, attributes, labels)
+    newInputs, newTargets, newAttributes = splitOnAttribute(bestSplit, bestSplitIndex, tempTargets, tempInputs, tempAttributes)
 
     for i, input in enumerate(newInputs):
         print("\t" * (depth) + bestSplit + " = " + attributes[bestSplitIndex][i+1] + ":")
